@@ -2,7 +2,7 @@ import numpy as np
 from numpy import random
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from scipy.optimize import minimize
+import matplotlib.patches as mpatches
 
 
 class NeuralNet:
@@ -14,7 +14,6 @@ class NeuralNet:
         return 1 / (1 + np.exp(-x))
 
     def forward(self, x):
-        # Forward pass
         hidden = self.sigmoid(np.dot(x, self.weights1))
         output = np.dot(hidden, self.weights2)
         return output
@@ -89,7 +88,6 @@ def animation(data, num_frequencies=32, fps=30, step=10000):
 
     # Update function for animation
     def update(frame):
-        print(frame)
         row_index = frame
         line.set_data(frequencies, data[row_index, :])
         line.set_label(f"Row {row_index}")
@@ -97,14 +95,12 @@ def animation(data, num_frequencies=32, fps=30, step=10000):
         return (line,)
 
     # Create animation
-    num_frames = data.shape[0]  # Number of frames (one per row)
+    num_frames = data.shape[0]
     frames = range(0, num_frames, step)
-    print(f"Number of frames: {num_frames}")
     ani = FuncAnimation(
         fig, update, frames=frames, blit=True, repeat=False, interval=interval
     )
 
-    # Show the animation
     plt.show()
 
 
@@ -118,6 +114,9 @@ def plot(data):
     Returns:
         void: Display the heatmap.
     """
+    sample = 500
+    data = data[::sample]
+
     num_time_steps = data.shape[0]
     plt.figure(figsize=(10, 6))
     plt.imshow(
@@ -125,9 +124,62 @@ def plot(data):
     )
     plt.colorbar(label="Intensity")
     plt.xlabel("Frequency (MHz)")
-    plt.ylabel("Time (s)")
+    plt.ylabel("Samples")
     plt.title("Spectral Heatmap")
     plt.show()
+
+
+def plot_clusters(data, cluster_labels):
+    num_time_steps = data.shape[0]
+    sample = 500
+    data = data[::sample]
+    cluster_labels = cluster_labels[::sample]
+
+    plt.figure(figsize=(15, 6))
+
+    # Plot the spectral heatmap
+    plt.subplot(1, 2, 1)
+    plt.imshow(
+        data, aspect="auto", cmap="turbo", extent=[1006, 1008, 0, num_time_steps]
+    )
+    plt.colorbar(label="Intensity")
+    plt.xlabel("Frequency (MHz)")
+    plt.ylabel("Samples")
+    plt.title("Spectral Heatmap")
+
+    # Prepare cluster_labels and plot them
+    cluster_labels = np.expand_dims(cluster_labels, axis=1)
+
+    plt.subplot(1, 2, 2)
+    plt.imshow(
+        cluster_labels,
+        aspect="auto",
+        cmap="tab20",
+        extent=[0, 1, 0, num_time_steps],
+    )
+    plt.title("Cluster Labels")
+    plt.legend(
+        handles=[
+            mpatches.Patch(
+                color=plt.cm.tab20(i / cluster_labels.max()), label=f"Program {i}"
+            )
+            for i in range(4)
+        ]
+    )
+    plt.yticks([])
+    plt.xticks([])
+
+    plt.tight_layout()
+    plt.show()
+
+
+def manual_clustering(data):
+    size = data.shape[0]
+    cluster_labels = np.zeros(size)
+    cluster_labels[236500:350000] = 1
+    cluster_labels[350000:1105000] = 2
+    cluster_labels[1105000:1346000] = 3
+    return cluster_labels[::-1]
 
 
 def main():
@@ -142,6 +194,12 @@ def main():
 
     # Plot the data
     plot(data=data)
+
+    # Manual clustering
+    cluster_labels = manual_clustering(data)
+
+    # Plot the data with cluster labels
+    plot_clusters(data, cluster_labels)
 
     # Animate the data
     animation(data, num_frequencies=num_frequencies, fps=30, step=10000)
