@@ -1,6 +1,28 @@
 import numpy as np
+from numpy import random
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from scipy.optimize import minimize
+
+
+class NeuralNet:
+    def __init__(self, input_size=32, hidden_size=16, output_size=3):
+        self.weights1 = np.random.rand(input_size, hidden_size)
+        self.weights2 = np.random.rand(hidden_size, output_size)
+
+    def sigmoid(self, x):
+        return 1 / (1 + np.exp(-x))
+
+    def forward(self, x):
+        # Forward pass
+        hidden = self.sigmoid(np.dot(x, self.weights1))
+        output = np.dot(hidden, self.weights2)
+        return output
+
+    def calculate_mse(self, inputs, targets):
+        predictions = np.array([self.forward(x) for x in inputs])
+        mse = np.mean((predictions - targets) ** 2)
+        return mse
 
 
 def load_data(file_path="spektar2.bin", data_type=np.int32, num_frequencies=32):
