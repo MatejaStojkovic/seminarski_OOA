@@ -3,3 +3,6 @@
 *.bin
 *.jpg
 *.png
+
+# virtual environment
+venv
